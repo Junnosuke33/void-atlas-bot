@@ -22,7 +22,7 @@ genai.configure(api_key=GEMINI_API_KEY)
 # --- AIの設定 ---
 # JSONだけを返すようにさらに厳しく指示
 model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash",
+    model_name="gemini-pro",
     system_instruction="""
     あなたは求人広告の裏を読むプロ「ブラック求人判定君」です。
     ユーザーから送られた求人情報を分析し、以下のJSON形式のデータのみを出力してください。
@@ -89,3 +89,4 @@ def handle_message(event):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
