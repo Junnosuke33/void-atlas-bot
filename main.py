@@ -18,7 +18,7 @@ line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 genai.configure(api_key=GEMINI_API_KEY)
 
-# --- ⚠️ここが重要：安全フィルターをOFFにする設定 ---
+# --- 安全フィルターを無効化（過剰反応を防ぐ） ---
 safety_settings = [
     {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
     {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
@@ -26,9 +26,9 @@ safety_settings = [
     {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
 ]
 
-# モデル設定（gemini-1.5-flashに戻して、フィルターなしで起動）
+# --- ⚠️ここを修正しました！確実に動く 'gemini-pro' を使用 ---
 model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash",
+    model_name="gemini-pro",
     safety_settings=safety_settings,
     system_instruction="""
     あなたは求人広告の裏を読むプロ「ブラック求人判定君」です。
@@ -79,7 +79,6 @@ def handle_message(event):
             reply_text = f"💦 判定不能でした。\nAIの返答: {response.text}"
 
     except Exception as e:
-        # ⚠️ここでエラーの正体をLINEに送る！
         reply_text = f"👾 エラー発生！原因を教えて！\n\n{str(e)}"
 
     line_bot_api.reply_message(
