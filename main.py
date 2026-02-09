@@ -26,13 +26,15 @@ safety_settings = [
     {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
 ]
 
-# とりあえず標準の 'gemini-1.5-flash' を指定
+# --- ✅ 修正完了：あなたのリストにある最新モデルを指定 ---
 model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash",
+    model_name="gemini-2.5-flash",
     safety_settings=safety_settings,
     system_instruction="""
     あなたは求人広告の裏を読むプロ「ブラック求人判定君」です。
     ユーザーから送られた求人情報を分析し、以下のJSON形式のデータのみを出力してください。
+    余計な挨拶やMarkdown記号（```jsonなど）は一切不要です。
+    
     出力フォーマット:
     {
         "danger_score": 0〜100の数値,
@@ -78,19 +80,7 @@ def handle_message(event):
             reply_text = f"💦 判定不能でした。\nAIの返答: {response.text}"
 
     except Exception as e:
-        # 🕵️‍♂️ ここが名探偵モード！
-        # エラーが起きたら、使えるモデル一覧をGoogleに問い合わせてLINEに送る
-        try:
-            available_models = []
-            for m in genai.list_models():
-                if 'generateContent' in m.supported_generation_methods:
-                    available_models.append(m.name)
-            
-            error_msg = f"👾 モデル名エラー！\nあなたのキーで使えるモデル一覧:\n"
-            error_msg += "\n".join(available_models)
-            reply_text = error_msg
-        except Exception as e2:
-            reply_text = f"👾 完全敗北...\nモデル一覧も取得できませんでした。\nKeyの設定を確認してください。\n\n元のエラー: {str(e)}"
+        reply_text = f"💦 エラーが発生しました。\nしばらく待ってからもう一度お試しください。\n({str(e)})"
 
     line_bot_api.reply_message(
         event.reply_token,
