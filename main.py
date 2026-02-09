@@ -18,7 +18,7 @@ line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 genai.configure(api_key=GEMINI_API_KEY)
 
-# --- 安全フィルターを無効化（過剰反応を防ぐ） ---
+# --- 安全フィルター無効化 ---
 safety_settings = [
     {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
     {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
@@ -26,14 +26,13 @@ safety_settings = [
     {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
 ]
 
-# --- ⚠️ここを修正しました！確実に動く 'gemini-pro' を使用 ---
+# とりあえず標準の 'gemini-1.5-flash' を指定
 model = genai.GenerativeModel(
-    model_name="gemini-pro",
+    model_name="gemini-1.5-flash",
     safety_settings=safety_settings,
     system_instruction="""
     あなたは求人広告の裏を読むプロ「ブラック求人判定君」です。
     ユーザーから送られた求人情報を分析し、以下のJSON形式のデータのみを出力してください。
-    
     出力フォーマット:
     {
         "danger_score": 0〜100の数値,
@@ -79,7 +78,19 @@ def handle_message(event):
             reply_text = f"💦 判定不能でした。\nAIの返答: {response.text}"
 
     except Exception as e:
-        reply_text = f"👾 エラー発生！原因を教えて！\n\n{str(e)}"
+        # 🕵️‍♂️ ここが名探偵モード！
+        # エラーが起きたら、使えるモデル一覧をGoogleに問い合わせてLINEに送る
+        try:
+            available_models = []
+            for m in genai.list_models():
+                if 'generateContent' in m.supported_generation_methods:
+                    available_models.append(m.name)
+            
+            error_msg = f"👾 モデル名エラー！\nあなたのキーで使えるモデル一覧:\n"
+            error_msg += "\n".join(available_models)
+            reply_text = error_msg
+        except Exception as e2:
+            reply_text = f"👾 完全敗北...\nモデル一覧も取得できませんでした。\nKeyの設定を確認してください。\n\n元のエラー: {str(e)}"
 
     line_bot_api.reply_message(
         event.reply_token,
